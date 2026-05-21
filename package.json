@@ -1,0 +1,15 @@
+{
+  "name": "converse",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "ui",
+    "backend",
+    "infra"
+  ],
+  "scripts": {
+    "dev:ui": "npm run dev -w ui",
+    "dev:backend": "npm run dev -w backend",
+    "build": "npm run build -w ui && npm run build -w backend"
+  }
+}

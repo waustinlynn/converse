@@ -1,0 +1,29 @@
+{
+  "name": "converse-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --sourcemap --outfile=dist/index.js",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1048.0",
+    "@aws-sdk/lib-dynamodb": "^3.1048.0",
+    "@google/genai": "^1.29.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "winston": "^3.19.0",
+    "ws": "^8.20.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
+  }
+}

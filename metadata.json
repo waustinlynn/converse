@@ -1,0 +1,6 @@
+{
+  "name": "Habla Local",
+  "description": "Conversational Spanish learning with real-time AI audio, immersive cultural design, and a gamified journey.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

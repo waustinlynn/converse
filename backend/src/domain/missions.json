@@ -1,0 +1,35 @@
+[
+  {
+    "id": "basics-greetings",
+    "stage": 0,
+    "level": "A0",
+    "name": "Greetings & Being",
+    "mission": "Learn how to say hello and the basic 'to be' (Ser).",
+    "targetPhrases": ["Hola", "Yo soy", "¿Cómo te llamas?", "Encantado"],
+    "masteryCriteria": "The user successfully introduces themselves using 'Yo soy' and responds to your greeting.",
+    "culturalNote": "In Spanish, 'Ser' is used for permanent traits like your name or nationality.",
+    "promptHint": "Talk to the user like a friend. Explain that 'Yo soy' means 'I am'. Ask them to introduce themselves."
+  },
+  {
+    "id": "basics-wants",
+    "stage": 0,
+    "level": "A0",
+    "name": "Wants & Needs",
+    "mission": "Learn how to express what you want (Querer).",
+    "targetPhrases": ["Yo quiero", "Agua", "Comida", "Por favor"],
+    "masteryCriteria": "The user successfully expresses a desire using 'Yo quiero' and uses 'por favor'.",
+    "culturalNote": "Spanish speakers are very direct; 'Yo quiero' is common and not considered rude if said with a smile!",
+    "promptHint": "Explain the verb 'Querer'. Ask the user what they want to drink or eat today."
+  },
+  {
+    "id": "basics-verbs",
+    "stage": 0,
+    "level": "A1",
+    "name": "Action! Present Tense",
+    "mission": "Understand basic -ar verbs like Hablar (to speak).",
+    "targetPhrases": ["Yo hablo", "Tú hablas", "Un poco", "Español"],
+    "masteryCriteria": "The user can conjugate 'hablar' in the first and second person present tense.",
+    "culturalNote": "Spanish verbs change their ending depending on who is doing the action.",
+    "promptHint": "Keep it casual. Teach them 'Yo hablo español'. Congratulate them on their progress."
+  }
+]
