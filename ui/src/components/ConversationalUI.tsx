@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, Volume2, Globe, Sparkles, MessageCircle } from 'lucide-react';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { pcmToBase64, AudioPlayer } from '../lib/audioUtils';
 
 interface ConversationalUIProps {
@@ -47,8 +48,17 @@ export const ConversationalUI: React.FC<ConversationalUIProps> = ({
   const startConversation = async () => {
     setIsConnecting(true);
     try {
+      // 1. Get the current session token from Amplify
+      const session = await fetchAuthSession();
+      const token = session.tokens?.accessToken?.toString();
+
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      // 2. Initialize WebSocket with the token in the protocol field
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/live`);
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/live`, [token]);
       wsRef.current = ws;
 
       ws.onopen = () => {

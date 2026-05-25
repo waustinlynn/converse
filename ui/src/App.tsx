@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Globe, BookOpen, User, Settings, Info, Map } from 'lucide-react';
+import { Globe, BookOpen, User, Settings, Info, Map, LogOut } from 'lucide-react';
+import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import { ConversationalUI } from './components/ConversationalUI';
 import { JourneyTracker } from './components/JourneyTracker';
 import { LESSON_CATEGORIES } from './types';
 
-export default function App() {
+function AuthenticatedApp() {
+  const { user, signOut } = useAuthenticator((context) => [context.user]);
   const [currentTab, setCurrentTab] = useState<'converse' | 'journey'>('converse');
   const [currentCategoryId, setCurrentCategoryId] = useState(LESSON_CATEGORIES[0].id);
-  const [completedIds, setCompletedIds] = useState<string[]>([]); // Start fresh
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   const currentCategory = LESSON_CATEGORIES.find(c => c.id === currentCategoryId) || LESSON_CATEGORIES[0];
 
@@ -49,15 +51,30 @@ export default function App() {
           <button className="p-2 text-olive-600 hover:text-ink-900 transition-colors">
             <BookOpen size={20} />
           </button>
-          <div className="w-8 h-8 rounded-full border-2 border-orange-500 p-0.5">
-            <div className="w-full h-full bg-olive-200 rounded-full flex items-center justify-center text-olive-700">
-              <User size={16} />
+          <div className="group relative">
+            <button className="w-8 h-8 rounded-full border-2 border-orange-500 p-0.5 flex items-center justify-center bg-olive-200 text-olive-700 overflow-hidden">
+              {user?.signInDetails?.loginId?.charAt(0).toUpperCase() || <User size={16} />}
+            </button>
+            {/* Simple Sign Out Dropdown */}
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-olive-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto py-2 z-50">
+              <div className="px-4 py-2 border-b border-olive-50 mb-1">
+                <p className="text-[10px] text-olive-400 font-bold uppercase tracking-wider">Usuario</p>
+                <p className="text-xs font-bold text-ink-900 truncate">{user?.signInDetails?.loginId}</p>
+              </div>
+              <button 
+                onClick={signOut}
+                className="w-full px-4 py-2 text-left text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+              >
+                <LogOut size={14} />
+                Cerrar Sesión
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-7xl mx-auto w-full">
+        {/* ... (rest of main content) ... */}
         <AnimatePresence mode="wait">
           {currentTab === 'converse' ? (
             <motion.div
@@ -141,5 +158,13 @@ export default function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Authenticator socialProviders={['google']}>
+      <AuthenticatedApp />
+    </Authenticator>
   );
 }

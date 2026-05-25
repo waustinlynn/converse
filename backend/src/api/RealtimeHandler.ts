@@ -15,10 +15,9 @@ export class RealtimeConnectionHandler {
         private userRepo: IUserRepository
     ) {}
 
-    handle(ws: WebSocket) {
-        logger.debug("New client connected to WebSocket");
+    handle(ws: WebSocket, userId: string) {
+        logger.debug(`New client connected to WebSocket. User: ${userId}`);
         let aiSession: AIConnection | null = null;
-        const userId = "mock-user-1"; // TODO: Replace with real user ID from JWT
 
         ws.on("message", async (data) => {
             try {

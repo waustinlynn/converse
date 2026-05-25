@@ -16,3 +16,11 @@ _aws/
 .docker_creds.json
 docker-credential-secretservice
 .tmp_docker/
+
+# AWS / Amplify
+.amplify/
+aws-exports.js
+amplifyconfiguration.json
+amplify-backup/
+amplify-build/
+.aws-sam/
