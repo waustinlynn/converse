@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 import { GeminiLiveService } from "./infrastructure/GeminiLiveService";
@@ -38,9 +37,10 @@ async function bootstrap() {
     // 2. HTTP Middlewares
     app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 
-    // 3. Vite Integration
+    // 3. Vite Integration (Dynamic import to avoid production overhead)
     if (process.env.NODE_ENV !== "production") {
         logger.info("Initializing Vite middleware...");
+        const { createServer: createViteServer } = await import("vite");
         const vite = await createViteServer({
             server: { middlewareMode: true, hmr: false },
             appType: "spa",

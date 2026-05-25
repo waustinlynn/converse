@@ -16,9 +16,22 @@ This application allows users to learn a language through real-time voice conver
 
 ### 3. Infrastructure (`/infra`)
 - **Framework:** AWS CDK (TypeScript).
-- **Architecture:** Multi-Stack Strategy (Network, DataAuth, App).
-- **Hosting:** ECS Fargate + Application Load Balancer (ALB).
-- **Why:** Modularizes the blast radius. WebSockets require long-lived connections supported by ALB, while ECS Fargate provides persistent backend execution.
+- **Architecture:** Managed Service Strategy (App Runner + DynamoDB).
+- **Hosting:** AWS App Runner.
+- **Why:** Chosen for POC/Beta to eliminate the high fixed costs of ALB (~$20/mo) and NAT Gateways (~$32/mo). App Runner natively supports WebSockets and handles SSL.
+
+## Key Findings & Quirks
+
+### 1. Unified Deployment
+We use a single Docker container to serve both the React UI and the Node.js backend. This simplifies deployment and avoids CORS issues. The `backend/Dockerfile` uses a multi-stage build to bundle both.
+
+### 2. Dependency Management
+- **Vite in Production:** To prevent production crashes, `vite` (a devDependency) must be dynamically imported in the backend code. 
+- **Docker Context:** The Docker build context must be set to the project root to allow the backend build to access the `ui` workspace and root `package.json`.
+
+### 3. Environment Quirks
+- **WSL Docker Auth:** When deploying from WSL/Linux, the `secretservice` credential helper may fail. See `infra/README.md` for the mock helper workaround.
+- **Node Version:** The project is standardized on **Node 22+**.
 
 ## Data & Persistence
 

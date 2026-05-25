@@ -6,3 +6,13 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Infrastructure
+cdk.out/
+.cdk.staging/
+_aws/
+
+# Docker & Credential Helpers
+.docker_creds.json
+docker-credential-secretservice
+.tmp_docker/

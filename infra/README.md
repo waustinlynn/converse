@@ -1,43 +1,83 @@
-# Infrastructure (AWS CDK)
+# Infrastructure (Low-Cost POC)
 
-This project uses a **Multi-Stack Strategy** to provide clear boundaries, protect persistent data, and allow for rapid application iteration.
+This project uses **AWS App Runner** and **DynamoDB** to provide a high-performance, low-cost ($5-$10/mo) environment for the conversational tutor.
 
-## 1. Architectural Boundaries (Stacks)
+## 1. Architecture
 
-Instead of a single monolithic deployment, we split the infrastructure into specialized "Stacks."
+- **Compute:** [AWS App Runner](https://aws.amazon.com/apprunner/) - Managed container service. Handles SSL, auto-scaling, and WebSockets.
+- **Database:** [Amazon DynamoDB](https://aws.amazon.com/dynamodb/) - Serverless NoSQL database.
+- **Registry:** [Amazon ECR](https://aws.amazon.com/ecr/) - Stores the Docker images built from `/backend`.
 
-### A. `NetworkStack` (The Foundation)
-- **Resources:** VPC, Public/Private Subnets, Internet Gateway.
-- **Lifecycle:** Deployed once. Changes very rarely.
-- **Boundary:** Isolates the networking logic from the application.
+## 2. Deployment Workflow
 
-### B. `DataAuthStack` (The State)
-- **Resources:** DynamoDB Table, Cognito User Pool, Cognito Client.
-- **Lifecycle:** Contains all persistent user data.
-- **Safety:** `removalPolicy: RemovalPolicy.RETAIN` is enabled here to prevent accidental data loss during a `cdk destroy`.
-- **Boundary:** This stack is the "Source of Truth" for identity and persistence.
+### Prerequisites
+- AWS CLI installed and configured.
+- Node.js 20+ and `npm` installed.
+- Docker running (required for CDK to build the image).
 
-### C. `AppStack` (The Compute)
-- **Resources:** ECS Cluster, Fargate Service (Backend), ALB (Load Balancer).
-- **Lifecycle:** Iterated on frequently. This is where your Node.js container lives.
-- **Boundary:** Connects to the `NetworkStack` for routing and `DataAuthStack` for permissions.
+### Commands
+1. **Bootstrap (One-time):**
+   ```bash
+   npx cdk bootstrap
+   ```
+2. **Deploy:**
+   ```bash
+   npx cdk deploy --all
+   ```
+   *Note: This will output a `ServiceUrl`. This is your live application URL.*
 
-## 2. State Management
+3. **Post-Deployment Configuration:**
+   Go to the AWS App Runner console, find your service, and add the following environment variable:
+   - `GEMINI_API_KEY`: Your Google GenAI API Key.
 
-Unlike Terraform, CDK does not use a local state file.
-- **CloudFormation:** State is stored natively in AWS as a CloudFormation Stack.
-- **Dependency Injection:** We pass objects from one stack to another in code (e.g., `const data = new DataStack(app, 'Data'); new AppStack(app, 'App', { table: data.table });`). CDK automatically handles the cross-stack exports for you.
+## 3. Authentication Configuration
 
-## 3. Deployment Workflow
+While the basic infrastructure is deployed via CDK, the following manual steps are required for a full Beta launch:
 
-1.  **Bootstrapping:** `npx cdk bootstrap` (One-time setup for your AWS account).
-2.  **Synthesis:** `npx cdk synth` (Translates TS to CloudFormation templates).
-3.  **Selective Deploy:**
-    - `npx cdk deploy NetworkStack`
-    - `npx cdk deploy DataAuthStack`
-    - `npx cdk deploy AppStack` (Your most common command).
+### A. AWS Cognito (Identity)
+The current POC uses a simple JWT-based flow. For a robust identity provider:
+1. Create a **Cognito User Pool**.
+2. Create an **App Client** (disable "Generate client secret" for SPA use).
+3. Add the `COGNITO_USER_POOL_ID` and `COGNITO_CLIENT_ID` to your UI `.env` file.
 
-## 4. Why this approach?
-- **Blast Radius:** If you make a mistake in the `AppStack`, your VPC and Database remain untouched.
-- **Permissions:** We use **Least Privilege IAM Roles** defined per stack. The `AppStack` only gets the specific ARN of the DynamoDB table from the `DataAuthStack`.
-- **Local Dev:** Use `docker-compose` for local dev; use CDK for professional AWS environments.
+### B. Google Auth (Optional)
+To allow "Login with Google":
+1. Create credentials in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Add the "Authorized redirect URIs" to match your App Runner `ServiceUrl` (e.g., `https://xxxx.awsapprunner.com/auth/callback`).
+3. Configure the Google Identity Provider within your Cognito User Pool.
+
+## 4. Teardown
+
+To avoid any ongoing costs, you can destroy the infrastructure:
+
+```bash
+npx cdk destroy --all
+```
+
+**Note on Persistence:** The DynamoDB table is configured with `RemovalPolicy.RETAIN`. After running `cdk destroy`, the table will still exist in your AWS account to prevent data loss. If you wish to delete the data as well, you must delete the table manually in the DynamoDB console.
+
+## 6. Common Pitfalls & Troubleshooting
+
+### Docker Authentication (WSL/Linux)
+If `cdk deploy` fails with a `docker login` error related to `secretservice` or `dbus`:
+1. **The Issue:** Docker is trying to use a GUI-based credential helper in a CLI environment.
+2. **The Fix:** Shadow the credential helper with a mock script that uses a local file:
+   ```bash
+   # Create a mock helper
+   echo '#!/bin/bash
+   STORE_FILE="$(pwd)/.docker_creds.json"
+   [ "$1" == "store" ] && cat > "$STORE_FILE" && exit 0
+   [ "$1" == "get" ] && read t && [[ "$t" == *"dkr.ecr"* ]] && cat "$STORE_FILE" && exit 0 || echo "{}"
+   exit 0' > docker-credential-secretservice
+   chmod +x docker-credential-secretservice
+   export PATH=$(pwd):$PATH
+   ```
+
+### Container Startup Crashes
+If App Runner fails to stabilize (Health Check failure):
+- **API Key:** Ensure `GEMINI_API_KEY` is not empty. The app will exit if it's missing.
+- **Vite Leak:** Do not import `vite` at the top level of `index.ts`. Use dynamic `await import("vite")` to prevent production environments from crashing on missing dev dependencies.
+- **Build Context:** Ensure the Docker context is the project root, not the `backend` folder, so that workspace files are available during build.
+
+### CDK v2 Migration
+If `cdk bootstrap` fails with "Unsupported feature flag", check `infra/cdk.json`. Remove any flags that were deprecated in the move from v1 to v2 (e.g., `dockerIgnoreSupport`).
